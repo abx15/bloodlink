@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Map | BloodLink</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        #map { height: 600px; }
+        .blood-marker {
+            background-color: #e53e3e;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-md">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-red-600 dark:text-red-400">BloodLink</a>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800 dark:text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+                <a href="#" id="backBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Map Container -->
+    <div class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Live Donor Map</h1>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">View available blood donors in your area. Click on markers for more details.</p>
+        
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="bloodGroupFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Blood Group</label>
+                    <select id="bloodGroupFilter" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white">
+                        <option value="all">All Groups</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="cityFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
+                    <input type="text" id="cityFilter" placeholder="Enter city" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label for="radiusFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Radius (km)</label>
+                    <select id="radiusFilter" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white">
+                        <option value="5">5 km</option>
+                        <option value="10">10 km</option>
+                        <option value="20">20 km</option>
+                        <option value="50">50 km</option>
+                        <option value="100">100 km</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="applyFilters" class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map -->
+        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-lg overflow-hidden">
+            <div id="map"></div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="mt-4 bg-white dark:bg-gray-700 rounded-lg shadow-md p-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Legend</h3>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center">
+                    <div class="blood-marker bg-red-600">A+</div>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">A+ Donor</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="blood-marker bg-blue-600">B+</div>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">B+ Donor</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="blood-marker bg-green-600">AB+</div>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">AB+ Donor</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="blood-marker bg-yellow-600">O+</div>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">O+ Donor</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="blood-marker bg-purple-600">-</div>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Negative Type</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="js/map.js"></script>
+</body>
+</html>
